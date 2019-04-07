@@ -1,0 +1,120 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package upir;
+
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Random;
+
+
+
+/**
+ //Can Used for Static and Non-Self-Submission
+// Suitable for UPIR and Optimal UPIR
+ * @author Rafi YZ
+ */
+public class upirlogcreation {
+    public void log_creation (ArrayList<Integer> users, int gsize, String plotqry,int plotuser, int Noq,int att) throws ParseException, FileNotFoundException, IOException
+    {
+           try{
+            
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/querydb","root","");
+            Statement st = con.createStatement();
+            ResultSet rs,rs2;
+            String qry;
+            List <String> uqry = new ArrayList<>();
+            List<String> words = new ArrayList<>();
+            String line;
+            int maxusers=0;
+            
+            Random randomGenerator = new Random();
+            
+            for (int p=0;p<gsize-1;p++)
+            {
+            int indx =  users.get(p);
+                try (BufferedReader reader = new BufferedReader(new FileReader("e:/test/user quries/"+indx+".txt"))) {
+                    while ((line = reader.readLine()) != null)
+                    {words.add(line);}
+                }
+             int rand = randomGenerator.nextInt(19);
+             uqry.add(words.get(rand));
+             words.clear();
+            }
+            //input some user and query of the user for identification purpose
+            
+            rs2=st.executeQuery("select max(sno) from fulllogTEMP");
+            while (rs2.next())
+            {maxusers= rs2.getInt("max(sno)");} 
+            int getdate= (int)(maxusers/(Noq+1))*att;       
+            
+            // System.out.println(getdate);      
+            rs2=st.executeQuery("select date from fulllogTEMP where sno="+getdate);
+            String qdate=null ;  
+            while (rs2.next())
+            {qdate=rs2.getString("date");} 
+           
+            Date date=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(qdate);
+            
+            Calendar cal = new GregorianCalendar();
+            cal.setTime(date);
+            String plotuqry=uqry.get(0);
+            int rand = randomGenerator.nextInt(5);
+            cal.add(Calendar.SECOND, rand);
+            Date cdate= cal.getTime();
+            SimpleDateFormat form = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String fdate = form.format(cdate);
+            String iquery="Insert into fulllogTEMP (anonid,query,date) values ("+plotuser+",'"+plotuqry+"','"+fdate+"')";
+           // System.out.println(iquery);
+            st.execute(iquery);      
+            
+            uqry.remove(0);
+            uqry.add(plotqry);       
+            Collections.shuffle(uqry); 
+            
+            for (int in=0; in<gsize-1;in++)
+            {
+            int indx= users.get(in);
+            String query= uqry.get(in);
+            int random = randomGenerator.nextInt(20);
+            cal.add(Calendar.SECOND, random);
+            Date ndate= cal.getTime();
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String fordate = format.format(ndate);
+            //String upquery="Update fulllogTEMP set query='"+query+"',date='"+fordate+"' where anonid="+indx+" and date='"+qdt+"' and sno="+serial;
+            String upquery="Insert into fulllogTEMP (anonid,query,date) values ("+indx+",'"+query+"','"+fordate+"')";
+           // System.out.println(upquery);
+            //System.out.println(fdate);
+           st.execute(upquery);
+            }
+              
+            }
+           catch (ClassNotFoundException | SQLException ex )
+        {
+            System.out.println("Error: "+ex);
+        }
+           
+    }
+
+   
+
+}
