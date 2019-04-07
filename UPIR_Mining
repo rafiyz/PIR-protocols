@@ -1,0 +1,130 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package upir;
+
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;/*
+
+/**
+ *
+ * @author Rafi YZ
+ */
+public class rulemining {
+    
+    /**
+     *
+     * @param gs
+     * @param Noq
+     * @param tries
+     * @param winsize
+     * @param minsup
+     * @param resfilepath
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    public void rule_mining(int gs, int Noq, int tries, int winsize, int minsup, String resfilepath, String plotqry) throws IOException {
+          
+          try{              
+    
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/querydb","root","");
+            Statement st = con.createStatement();
+            ResultSet rs,rs2;
+            String qry;
+            int filename=0;
+            int support =0;
+            int maxusers=0;
+            List <Integer> expecteduser = new ArrayList<>();
+            rs2=st.executeQuery("select max(sno) from fulllogTEMP");
+            FileWriter resultfile = new FileWriter(resfilepath, true);
+            
+            resultfile.append("\n"+(tries+1)+" Attempt\n\n");
+            while (rs2.next())
+            {  maxusers= rs2.getInt("max(sno)");} 
+            
+// PROBLEM to SOLVE PREVENT WINDOWSIZE from out side the resultset      
+            int diff= maxusers-winsize;
+            //qry= "select anonid, query from fulllogTEMP where  sno>"+winsize+" and sno<"+ diff+" order by date";
+            qry= "select anonid, query from fulllogTEMP  order by date";
+            rs = st.executeQuery(qry);   
+            List <Integer> user = new ArrayList<>();
+            List <String> query = new ArrayList<>();
+                while (rs.next())
+                {
+                        Integer srh1= rs.getInt("anonid"); 
+                        user.add(srh1);
+                        String srh2=rs.getString("query");
+                        query.add(srh2);
+                }
+                //Finding Query support
+                for(int i=0;i<query.size();i++)
+                {
+                    if (plotqry.equals(query.get(i)))
+                    {
+                        filename++;
+                        FileWriter writertemp = new FileWriter("f:/test/"+filename+".txt", true);
+                        for(int j=i-winsize;j<i+winsize;j++)
+                        {
+                          writertemp.write(user.get(j)+" ");
+                          if(!expecteduser.contains(user.get(j)))
+                          expecteduser.add(user.get(j));
+                        }
+                        writertemp.close();
+                    }
+                    
+                    }
+             
+                
+            for(int userid=0;userid<expecteduser.size();userid++)
+                {
+                    
+                for (int k=1;k<=filename;k++)
+                {
+                    for(String line: Files.readAllLines(Paths.get("f:/test/"+k+".txt"))){
+                       for (String part: line.split("\\s+")){
+                            if(expecteduser.get(userid).equals(Integer.valueOf(part)))
+                           {
+                               support++;
+                               break;
+                           }
+                            
+                       }
+                   }
+                
+                }
+                if(support>=minsup)
+                { 
+                    System.out.println("User:"+expecteduser.get(userid)+" Support:"+support);
+                    resultfile.append("User:"+expecteduser.get(userid)+" Support:"+support+"\n");
+                    
+                }
+                support=0;
+                }
+            resultfile.close();
+           
+            for (int k=1;k<=filename;k++)
+            {
+                Files.delete(Paths.get("f:/test/"+k+".txt"));
+            }
+            System.out.printf("-----------------------\n");
+}
+  catch (ClassNotFoundException | SQLException ex)
+        {
+            System.out.println("Error: "+ex);
+        }
+        
+      
+    }  }      
