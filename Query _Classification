@@ -1,0 +1,133 @@
+
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.*;
+import java.io.*;
+import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays.*; 
+
+//package queryclassification;
+
+/**
+ *
+ * @author Rafi YZ
+ */
+public class Queryclassification {
+
+   	 
+static void fun(String s)
+{
+	ArrayList<String> arl =new ArrayList<String>();
+	String address = "http://www.dmoz.org/search?q=";
+	String query = s;
+	String charset = "UTF-8";
+ 
+	try { 
+		URL url = new URL(address + URLEncoder.encode(query, charset));
+	
+	URLConnection conn =  url.openConnection();
+      	conn.setRequestProperty("User-Agent",
+            "Mozilla/5.0 (X11; U; Linux x86_64; en-GB; rv:1.8.1.6) Gecko/20070723 Iceweasel/2.0.0.6 (Debian-2.0.0.6-0etch1)");
+
+	BufferedReader in = new BufferedReader(new InputStreamReader(
+			conn.getInputStream()));
+	String str;
+ 
+	while ((str = in.readLine()) != null) {
+		//System.out.println(str);
+		Pattern pattern = Pattern.compile("<strong>(.*?)</strong>");
+		Matcher matcher = pattern.matcher(str);
+		if (matcher.find())
+		{
+			arl.add(matcher.group(1));
+		   //System.out.println(matcher.group(matcher.groupCount()));
+		}
+	}
+ 
+	in.close();
+	/*for(String s1:arl){
+		System.out.println(s1);}*/
+	//System.out.println(arl.get(0)+ " "+ arl.get(2));
+	fw(arl.get(0),arl.get(2));
+
+}catch(Exception e){
+	
+	//System.out.println(e.getMessage()+" exception error");
+}
+}
+
+static void fw(String s1, String s2)
+{
+	try{
+		//String data = " This content will append to the end of the file";
+		
+		File file =new File("f:\\test\\result.txt");
+		
+		//if file doesnt exists, then create it
+		if(!file.exists()){
+			file.createNewFile();
+		}
+		
+		//true = append file
+		FileWriter fileWritter = new FileWriter(file,true);
+	       BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+	       bufferWritter.append("\r\n"+s1+" ~ \r\t"+s2);
+	      // bufferWritter.append("\r\n"+data);
+	       bufferWritter.close();
+	   
+        //System.out.println("Done");
+        
+	}catch(IOException e){
+		e.printStackTrace();
+	}
+}
+
+public static void main(String args[]) {
+	 
+	ArrayList<String> als= new ArrayList<String>();
+	BufferedReader br = null;
+
+	try {
+
+		String sCurrentLine;
+
+		br = new BufferedReader(new FileReader("f:\\test\\query.txt"));
+
+		while ((sCurrentLine = br.readLine()) != null) {
+			Pattern pat= Pattern.compile("\"([^\"]*)\"");
+			Matcher mat= pat.matcher(sCurrentLine);
+			//System.out.println(sCurrentLine);
+			if (mat.find())
+			{
+				als.add(mat.group(1));
+			   
+			}
+			//System.out.println(sCurrentLine);
+		}
+
+	} catch (IOException e) {
+		e.printStackTrace();
+	} finally {
+		try {
+			if (br != null)br.close();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+for(int c=0;c<als.size();c++){
+	fun(als.get(c));
+	
+	//System.out.println(als.get(c));
+}
+}}
